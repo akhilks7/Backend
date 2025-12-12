@@ -55,7 +55,8 @@ exports.getallBookController = async (req, res) => {
 
     const query = {
         title: { $regex: searchkey, $options: "i" },
-        usermail: { $ne: usermail }
+        usermail: { $ne: usermail },
+        status: { $ne: sold }
     }
     try {
         const allbooks = await books.find(query)
