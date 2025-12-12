@@ -56,7 +56,7 @@ exports.getallBookController = async (req, res) => {
     const query = {
         title: { $regex: searchkey, $options: "i" },
         usermail: { $ne: usermail },
-        status: { $ne: sold }
+        status: { $ne: "sold" }
     }
     try {
         const allbooks = await books.find(query)
@@ -203,47 +203,3 @@ exports.makeBookPaymentController = async (req, res) => {
 
 }
 
-exports.makeBookPaymentController = async (req, res) => {
-
-    console.log(`Inside Make Payment Controller`);
-const userMail = req.payload
-    console.log(userMail);
-    console.log(req);
-    
-    const { _id, title, author, noofPages, imageUrl, price, dprice, abstract, publisher, language, isbn, category, uploadImages } = req.body
-
-    
-    
-    try {
-        const updateBookPayment = await books.findByIdAndUpdate({ _id }, { title, author, noofPages, imageUrl, price, dprice, abstract, publisher, language, isbn, category, uploadImages, status: "sold", boughtBy: userMail }, { new: true })
-        console.log(updateBookPayment);
-        const line_items = [{
-            price_data: {
-                currency: "usd",
-                product_data: {
-                    name: title,
-                    description: `${author} | ${publisher}`,
-                    images: [imageUrl],
-                    metadata: {
-                        title, author, noofPages, imageUrl, price, dprice, abstract, publisher, language, isbn, category, status: "sold", boughtBy: userMail
-                    }
-                },
-                unit_amount: Math.round(dprice * 100)
-            },
-            quantity: 1
-        }]
-        const session = await stripe.checkout.sessions.create({
-            payment_method_types: ["card"],
-            line_items,
-            mode: 'payment',
-            success_url: 'http://localhost:5173/payment-success',
-            cancel_url: "http://localhost:5173/payment-error",
-
-        });
-        console.log(session);
-        res.status(200).json({ checkoutSessionUrl: session.url })
-        // res.status(200).json("Success response received")
-    }catch (error) {
-        res.status(500).json(error)
-    }
-}
